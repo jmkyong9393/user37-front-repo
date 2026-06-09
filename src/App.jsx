@@ -6,7 +6,13 @@ import BookUpdate from "./pages/BookUpdate";
 import CoverUpdate from "./pages/CoverUpdate";
 import StartPage from "./pages/StartPage";
 import Header from "./components/Header";
-const API_URL = "http://localhost:3000/books";
+const API_URL = import.meta.env.VITE_BOOK_API_URL || "http://localhost:8080/books";
+
+const normalizeBooks = (data) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+};
 
 function App() {
   const [page, setPage] = useState("start");
@@ -100,12 +106,13 @@ function App() {
       }
 
       const data = await res.json();
+      const nextBooks = normalizeBooks(data);
 
-      setBooks(data);
-      setSelectedId((prevId) => prevId ?? data[0]?.id ?? null);
+      setBooks(nextBooks);
+      setSelectedId((prevId) => prevId ?? nextBooks[0]?.id ?? null);
     } catch (error) {
       console.error(error);
-      setMessage("json-server 실행 여부를 확인해주세요.");
+      setMessage("백엔드 서버 연결 상태를 확인해주세요.");
     }
   }, []);
 
@@ -405,32 +412,8 @@ function App() {
         throw new Error("이미지 데이터가 응답에 없습니다.");
       }
 
-      const imageSrc = `data:image/png;base64,${b64Json}`;
-
-      const patchRes = await fetch(`${API_URL}/${book.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          coverImageUrl: imageSrc,
-          updatedAt: new Date().toISOString().slice(0, 10),
-        }),
-      });
-
-      if (!patchRes.ok) {
-        throw new Error("표지 저장 실패");
-      }
-
-      const savedBook = await patchRes.json();
-
-      setBooks((prevBooks) =>
-        prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item)),
-      );
-
-      setSelectedId(savedBook.id);
       setMessage("");
-      return savedBook;
+      return `data:image/png;base64,${b64Json}`;
     } catch (error) {
       console.error(error);
       setMessage(error.message || "표지 생성 중 오류가 발생했습니다.");
@@ -440,14 +423,13 @@ function App() {
 
   const handleSaveCoverImage = async (book, imageSrc) => {
     try {
-      const res = await fetch(`${API_URL}/${book.id}`, {
+      const res = await fetch(`${API_URL}/${book.id}/cover`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           coverImageUrl: imageSrc,
-          updatedAt: new Date().toISOString().slice(0, 10),
         }),
       });
 

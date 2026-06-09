@@ -13,7 +13,9 @@ function CoverUpdate({
   const [quality, setQuality] = useState("medium");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCoverOpen, setIsCoverOpen] = useState(false);
-  const previewImage = book?.coverImageUrl || "";
+  const [draftCoverImage, setDraftCoverImage] = useState("");
+  const previewImage = draftCoverImage || book?.coverImageUrl || "";
+  const hasDraftCoverImage = Boolean(draftCoverImage);
 
   if (!book) {
     return (
@@ -34,12 +36,16 @@ function CoverUpdate({
     setIsGenerating(true);
 
     try {
-      await onGenerateCover({
+      const generatedImage = await onGenerateCover({
         book,
         apiKey,
         model,
         quality,
       });
+
+      if (generatedImage) {
+        setDraftCoverImage(generatedImage);
+      }
     } catch (error) {
       console.error(error);
       alert(error.message || "표지 생성 중 오류가 발생했습니다.");
@@ -63,7 +69,7 @@ function CoverUpdate({
     const reader = new FileReader();
 
     reader.onload = async () => {
-      await onSaveCoverImage(book, reader.result);
+      setDraftCoverImage(reader.result);
     };
     reader.onerror = () => {
       alert("이미지 파일을 읽지 못했습니다.");
@@ -72,6 +78,11 @@ function CoverUpdate({
   };
 
   const handleDeleteCoverImage = async () => {
+    if (hasDraftCoverImage) {
+      setDraftCoverImage("");
+      return;
+    }
+
     const isConfirm = window.confirm(
       "생성된 표지를 삭제하고 기본 이미지로 되돌릴까요?",
     );
@@ -79,6 +90,22 @@ function CoverUpdate({
     if (!isConfirm) return;
 
     await onSaveCoverImage(book, "");
+  };
+
+  const handleSaveCoverImage = async () => {
+    if (!draftCoverImage) return;
+
+    const savedBook = await onSaveCoverImage(book, draftCoverImage);
+
+    if (savedBook) {
+      setDraftCoverImage("");
+      onMoveToDetail(savedBook);
+    }
+  };
+
+  const handleCancelCoverImage = () => {
+    setDraftCoverImage("");
+    onMoveToDetail(book);
   };
 
   return (
@@ -133,10 +160,24 @@ function CoverUpdate({
                 {isGenerating ? "표지 생성중" : "AI 표지 생성"}
               </button>
 
-              <button type="button" onClick={() => onMoveToDetail(book)}>
-                취소
-              </button>
+              {!hasDraftCoverImage && (
+                <button type="button" onClick={() => onMoveToDetail(book)}>
+                  취소
+                </button>
+              )}
             </div>
+
+            {hasDraftCoverImage && (
+              <div className="cover-buttons">
+                <button type="button" onClick={handleSaveCoverImage}>
+                  저장
+                </button>
+
+                <button type="button" onClick={handleCancelCoverImage}>
+                  취소
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="section-card cover-result-area">
