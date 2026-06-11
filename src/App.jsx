@@ -66,7 +66,7 @@ function App() {
         case "title":
           return book.title.toLowerCase().includes(keyword);
         case "author":
-          return book.author.toLowerCase().includes(keyword);
+          return book.author.nickname.toLowerCase().includes(keyword);
         case "publisher":
           return book.publisher.toLowerCase().includes(keyword);
         case "content":
@@ -76,7 +76,7 @@ function App() {
         default:
           return (
             book.title.toLowerCase().includes(keyword) ||
-            book.author.toLowerCase().includes(keyword) ||
+            book.author.nickname.toLowerCase().includes(keyword) ||
             book.publisher.toLowerCase().includes(keyword) ||
             book.content.toLowerCase().includes(keyword) ||
             book.tags?.toLowerCase().includes(keyword)
@@ -213,6 +213,9 @@ function App() {
   };
 
   const moveToStart = () => {
+    setSearch("");
+    setType("all");
+    setListPage(1);
     setMessage("");
     setPage("start");
   };
@@ -297,11 +300,11 @@ function App() {
 
   const handleCreateBook = async (formData) => {
     const now = new Date().toISOString();
-    const authorName =
-      currentUser?.nickname || currentUser?.name || currentUser?.userId || formData.author;
+    // const authorName =
+    //   currentUser?.nickname || currentUser?.name || currentUser?.userId || formData.author;
     const newBook = {
       ...formData,
-      author: authorName,
+      // author: authorName,
       userId: currentUser?.userId,
       coverImageUrl: "",
       likeCount: 0,
@@ -380,8 +383,10 @@ function App() {
       const res = await fetch(`${API_URL}/${book.id}/like`, {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
+        body: JSON.stringify({ userId: currentUser.userId }),
       });
 
       if (!res.ok) {
@@ -587,6 +592,10 @@ function App() {
           books={filteredBooks}
           search={search}
           onSearch={setSearch}
+          onClearSearch={() => {
+            setSearch("");
+            setListPage(1);
+          }}
           type={type}
           onType={setType}
           currentPage={listPage}

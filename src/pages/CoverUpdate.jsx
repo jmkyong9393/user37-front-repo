@@ -196,7 +196,7 @@ function CoverUpdate({
 
             <div className="cover-book-info">
               <h3>{book.title}</h3>
-              <p>저자: {book.author}</p>
+              <p>저자: {book.author.nickname}</p>
               {book.publisher && <p>출판사: {book.publisher}</p>}
               <p>{book.content}</p>
             </div>

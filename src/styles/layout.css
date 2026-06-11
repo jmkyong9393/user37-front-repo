@@ -444,12 +444,47 @@ img {
   height: 100%;
   border: none;
   outline: none;
-  padding: 0 16px;
+  padding: 0 74px 0 16px;
   font-size: 1.02rem;
   background: transparent;
 }
 
-.search-box svg {
+.search-clear-button {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  z-index: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #52667a;
+  transform: translateY(-50%);
+}
+
+.search-clear-button:hover {
+  background: transparent;
+  color: #14375c;
+}
+
+.search-clear-button svg {
+  position: static;
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  pointer-events: none;
+  transform: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.search-box > svg {
   width: 20px;
   height: 20px;
   margin-right: 16px;
@@ -484,10 +519,10 @@ img {
   stroke-linejoin: round;
 }
 
-.search-box svg {
+.search-box > svg {
   position: absolute;
   top: 50%;
-  right: 15px;
+  right: 38px;
   pointer-events: none;
   transform: translateY(-50%);
   fill: none;

@@ -4,7 +4,7 @@ import BookForm from "../components/BookForm";
 function BookUpdate({ book, onMoveToDetail, onUpdate, onExtractTags }) {
   const [formData, setFormData] = useState({
     title: book?.title || "",
-    author: book?.author || "",
+    author: book?.author?.nickname || "",
     publisher: book?.publisher || "",
     content: book?.content || "",
     tags: book.tags || "",
@@ -32,12 +32,22 @@ function BookUpdate({ book, onMoveToDetail, onUpdate, onExtractTags }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!formData.title.trim() || !formData.author.trim()) {
+    if (!formData.title.trim() || !formData.author?.trim()) {
       alert("도서 제목과 저자는 필수입니다.");
       return;
     }
 
-    onUpdate(book, formData);
+    const submitData = {
+      title: formData.title,
+      publisher: formData.publisher,
+      content: formData.content,
+      tags: formData.tags,
+      author: {
+        userId: book?.author?.userId
+      }
+    };
+
+    onUpdate(book, submitData);
   };
 
   return (

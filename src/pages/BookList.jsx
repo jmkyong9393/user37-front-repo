@@ -7,6 +7,7 @@ function BookList({
   books = [],
   search,
   onSearch,
+  onClearSearch,
   type,
   onType,
   currentPage,
@@ -57,6 +58,24 @@ function BookList({
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="도서를 검색해주세요"
                 />
+                {search && (
+                  <button
+                    type="button"
+                    className="search-clear-button"
+                    onClick={onClearSearch}
+                    aria-label="검색어 지우기"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      width="18"
+                      height="18"
+                    >
+                      <path d="M6 6l12 12" />
+                      <path d="M18 6L6 18" />
+                    </svg>
+                  </button>
+                )}
                 <svg
                   aria-hidden="true"
                   viewBox="0 0 24 24"

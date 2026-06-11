@@ -69,7 +69,7 @@ function BookForm({
         <input
           type="text"
           name="author"
-          value={formData.author}
+          value={formData.author || ""}
           onChange={onChange}
           readOnly={authorReadonly}
           placeholder="저자를 입력하세요"

@@ -17,8 +17,8 @@ function BookDetail({
   const isLoggedIn = Boolean(currentUser);
   const isOwner =
     isLoggedIn &&
-    book?.authorUserId != null &&
-    String(book.authorUserId) === String(currentUser?.id);
+    book?.author != null &&
+    String(book.author.userId) === String(currentUser?.id);
 
   if (!book) {
     return (
@@ -99,7 +99,7 @@ function BookDetail({
               <>
                 <span>BOOK</span>
                 <strong>{book.title}</strong>
-                <em>{book.author}</em>
+                <em>{book.author.nickname}</em>
               </>
             )}
           </div>
@@ -128,7 +128,7 @@ function BookDetail({
                 })}
               </div>
             )}
-            <p>저자: {book.author}</p>
+            <p>저자: {book.author.nickname}</p>
             {book.publisher && <p>출판사: {book.publisher}</p>}
 
             <div className="content-box">
