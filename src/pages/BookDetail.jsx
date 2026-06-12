@@ -11,7 +11,6 @@ function BookDetail({
   onLikeBook,
   currentUser,
   isLiked = false,
-  authToken,
 
   comments,
   sortBy,

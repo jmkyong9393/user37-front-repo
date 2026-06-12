@@ -6,23 +6,57 @@ import BookUpdate from "./pages/BookUpdate";
 import CoverUpdate from "./pages/CoverUpdate";
 import StartPage from "./pages/StartPage";
 import AuthPage from "./pages/AuthPage";
+import MyPage from "./pages/MyPage";
 import Header from "./components/Header";
 import {
   clearAuth,
+  getMyPage,
   getStoredAuth,
   login as loginUser,
+  logout as logoutUser,
   refreshAccessToken,
   saveAuth,
   signup as signupUser,
+  updateMyProfile,
 } from "./api/authApi";
 const API_URL = import.meta.env.VITE_BOOK_API_URL || "http://localhost:8080/books";
 
+const normalizeBook = (book) => {
+  if (!book) return book;
+
+  const author = book.author || {};
+
+  return {
+    ...book,
+    author: {
+      ...author,
+      nickname:
+        author.nickname || author.nickName || author.name || author.userId || "",
+    },
+  };
+};
+
+const sortBooksOldestFirst = (bookList) =>
+  [...bookList].sort((a, b) => {
+    const dateA = a.createdAt || "";
+    const dateB = b.createdAt || "";
+
+    if (dateA !== dateB) {
+      return dateA.localeCompare(dateB);
+    }
+
+    return (a.id || 0) - (b.id || 0);
+  });
+
 const normalizeBooks = (data) => {
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.content)) return data.content;
-  if (Array.isArray(data?.data)) return data.data;
-  if (Array.isArray(data?.data?.content)) return data.data.content;
-  return [];
+  let books = [];
+
+  if (Array.isArray(data)) books = data;
+  else if (Array.isArray(data?.content)) books = data.content;
+  else if (Array.isArray(data?.data)) books = data.data;
+  else if (Array.isArray(data?.data?.content)) books = data.data.content;
+
+  return sortBooksOldestFirst(books.map(normalizeBook));
 };
 
 const getUserKey = (user) =>
@@ -341,6 +375,17 @@ function App() {
     setPage("signup");
   };
 
+  const moveToMyPage = () => {
+    if (!currentUser) {
+      setMessage("로그인 후 마이페이지를 확인할 수 있습니다.");
+      setPage("login");
+      return;
+    }
+
+    setMessage("");
+    setPage("mypage");
+  };
+
   const moveToList = () => {
     setListPage(1);
     setMessage("");
@@ -383,13 +428,21 @@ function App() {
     setPage("start");
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      if (auth?.accessToken) {
+        await logoutUser(authFetch);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
     clearAuth();
     setAuth(null);
     setLikedBookIds(new Set());
     setMessage("로그아웃되었습니다.");
 
-    if (["create", "update", "coverUpdate"].includes(page)) {
+    if (["create", "update", "coverUpdate", "mypage"].includes(page)) {
       setPage("start");
     }
   };
@@ -436,7 +489,7 @@ function App() {
         throw new Error("도서 등록 실패");
       }
 
-      const savedBook = await res.json();
+      const savedBook = normalizeBook(await res.json());
 
       setBooks((prevBooks) => [...prevBooks, savedBook]);
       setSelectedId(savedBook.id);
@@ -472,7 +525,7 @@ function App() {
         throw new Error("도서 수정 실패");
       }
 
-      const savedBook = await res.json();
+      const savedBook = normalizeBook(await res.json());
 
       setBooks((prevBooks) =>
         prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item)),
@@ -511,7 +564,7 @@ function App() {
         throw new Error("도서 추천 처리에 실패했습니다.");
       }
 
-      const data = await res.json();
+      const data = normalizeBook(await res.json());
 
       setBooks((prevBooks) =>
         prevBooks.map((item) => (item.id === data.id ? data : item)),
@@ -642,7 +695,7 @@ function App() {
         throw new Error("표지 저장 실패");
       }
 
-      const savedBook = await res.json();
+      const savedBook = normalizeBook(await res.json());
 
       setBooks((prevBooks) =>
         prevBooks.map((item) => (item.id === savedBook.id ? savedBook : item)),
@@ -747,6 +800,47 @@ function App() {
     }
   };
 
+  const handleLoadMyPage = useCallback(() => {
+    return getMyPage(authFetch, currentUser);
+  }, [authFetch, currentUser]);
+
+  const handleUpdateMyProfile = useCallback(
+    async (formData) => {
+      const nextMyPage = await updateMyProfile(authFetch, formData, currentUser);
+      const nextAuth = {
+        ...auth,
+        accessToken: nextMyPage.accessToken || auth?.accessToken,
+        refreshToken: nextMyPage.refreshToken || auth?.refreshToken,
+        user: {
+          ...(auth?.user || {}),
+          ...nextMyPage.user,
+        },
+      };
+
+      saveAuth(nextAuth);
+      setAuth(nextAuth);
+      setBooks((prevBooks) =>
+        prevBooks.map((book) => {
+          if (String(book.author?.userId) !== String(nextMyPage.user.userId)) {
+            return book;
+          }
+
+          return normalizeBook({
+            ...book,
+            author: {
+              ...book.author,
+              nickname: nextMyPage.user.nickname,
+              nickName: nextMyPage.user.nickname,
+            },
+          });
+        }),
+      );
+      setMessage("프로필 정보가 수정되었습니다.");
+      return nextMyPage;
+    },
+    [auth, authFetch, currentUser],
+  );
+
   return (
     <div className="app">
       {message && (
@@ -761,6 +855,7 @@ function App() {
         currentUser={currentUser}
         onMoveToLogin={moveToLogin}
         onMoveToSignup={moveToSignup}
+        onMoveToMyPage={moveToMyPage}
         onLogout={handleLogout}
         onMoveToDetail={moveToDetail}
       />
@@ -804,7 +899,6 @@ function App() {
           onLikeBook={handleLikeBook}
           currentUser={currentUser}
           isLiked={selectedBook ? likedBookIds.has(String(selectedBook.id)) : false}
-          authToken={authToken}
 
           comments={comments}
           sortBy={sortBy}
@@ -844,6 +938,15 @@ function App() {
           onMoveToLogin={moveToLogin}
           onMoveToSignup={moveToSignup}
           onMoveToStart={moveToStart}
+        />
+      )}
+
+      {page === "mypage" && (
+        <MyPage
+          currentUser={currentUser}
+          onMoveToStart={moveToStart}
+          onLoadMyPage={handleLoadMyPage}
+          onUpdateProfile={handleUpdateMyProfile}
         />
       )}
 

@@ -480,6 +480,108 @@ button.hero-banner {
   letter-spacing: 0;
 }
 
+.mypage-button {
+  border-color: #c8dbe8;
+}
+
+.mypage-page {
+  display: grid;
+  gap: 18px;
+}
+
+.mypage-title-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.mypage-title-row h2 {
+  margin: 8px 0 0;
+  color: #14375c;
+  font-size: clamp(24px, 3vw, 30px);
+  letter-spacing: 0;
+}
+
+.mypage-state {
+  margin: 0;
+  color: #52667a;
+  font-weight: 700;
+}
+
+.mypage-state.is-error {
+  color: #b42318;
+}
+
+.mypage-user-box {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mypage-user-box > div {
+  position: relative;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #dbe4ee;
+  border-radius: 10px;
+  background: #f8fafc;
+  overflow: hidden;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.mypage-user-box > div::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(47, 127, 111, 0.12), rgba(20, 55, 92, 0.04));
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+
+.mypage-user-box > div:hover {
+  border-color: #a9cec8;
+  background: #ffffff;
+  box-shadow: 0 14px 28px rgba(16, 50, 79, 0.11);
+  transform: translateY(-3px);
+}
+
+.mypage-user-box > div:hover::before {
+  opacity: 1;
+}
+
+.mypage-user-box span {
+  position: relative;
+  display: block;
+  margin-bottom: 6px;
+  color: #52667a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.mypage-user-box strong {
+  position: relative;
+  display: block;
+  overflow-wrap: anywhere;
+  color: #14375c;
+  font-size: 18px;
+}
+
+.mypage-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 620px;
+  margin-top: 24px;
+  padding-top: 6px;
+}
+
 .list-actions {
   display: flex;
   gap: 12px;
@@ -644,6 +746,7 @@ button.hero-banner {
 .search-box input:focus,
 .book-form input:focus,
 .book-form textarea:focus,
+.mypage-form input:focus,
 .cover-form-area input:focus,
 .cover-form-area select:focus {
   border-color: #2f7f6f;
@@ -1210,6 +1313,7 @@ button.hero-banner {
 
 .book-form input,
 .book-form textarea,
+.mypage-form input,
 .cover-form-area input,
 .cover-form-area select {
   width: 100%;
@@ -1469,6 +1573,16 @@ button.hero-banner {
 
   .list-actions {
     width: 100%;
+  }
+
+  .mypage-title-row,
+  .mypage-user-box {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-title-row {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .list-actions button,

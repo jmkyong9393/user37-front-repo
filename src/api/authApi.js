@@ -113,6 +113,17 @@ export const refreshAccessToken = async (refreshToken) => {
   const data = await response.json();
   return data?.accessToken || data?.data?.accessToken || "";
 };
+
+export const logout = async (authFetch) => {
+  const response = await authFetch(`${AUTH_API_URL}/logout`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.message || "로그아웃 요청에 실패했습니다.");
+  }
+};
  
 export const saveAuth = (auth) => {
   window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
@@ -129,4 +140,58 @@ export const getStoredAuth = () => {
  
 export const clearAuth = () => {
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
+};
+
+export const normalizeMyPageResponse = (data, fallbackUser = {}) => {
+  const payload = data?.data || data || {};
+  const user = payload.user || payload.member || payload.profile || payload;
+
+  return {
+    accessToken: payload.accessToken || "",
+    refreshToken: payload.refreshToken || "",
+    user: {
+      id: user.id || fallbackUser.id || fallbackUser.userId,
+      userId: user.userId || user.loginId || fallbackUser.userId || "",
+      loginId: user.loginId || user.userId || fallbackUser.loginId || "",
+      name: user.name || fallbackUser.name || "",
+      email: user.email || fallbackUser.email || "",
+      nickname:
+        user.nickname ||
+        fallbackUser.nickname ||
+        user.name ||
+        user.loginId ||
+        user.userId ||
+        "",
+    },
+  };
+};
+
+export const getMyPage = async (authFetch, fallbackUser) => {
+  const response = await authFetch(`${AUTH_API_URL}/me`);
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.message || "마이페이지 정보를 불러오지 못했습니다.");
+  }
+
+  const data = await response.json();
+  return normalizeMyPageResponse(data, fallbackUser);
+};
+
+export const updateMyProfile = async (authFetch, formData, fallbackUser) => {
+  const response = await authFetch(`${AUTH_API_URL}/me`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(formData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.message || "프로필 정보를 수정하지 못했습니다.");
+  }
+
+  const data = await response.json();
+  return normalizeMyPageResponse(data, fallbackUser);
 };
