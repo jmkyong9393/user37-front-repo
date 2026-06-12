@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CoverImageModal from "../components/CoverImageModal";
- 
+
 function BookDetail({
   book,
   onMoveToList,
@@ -11,6 +11,15 @@ function BookDetail({
   onLikeBook,
   currentUser,
   isLiked = false,
+  authToken,
+
+  comments,
+  sortBy,
+  onSortChange,
+  onCommentFetch,
+  onCommentSubmit,
+  onCommentDelete,
+  onCommentLike,
 }) {
   const [isCoverOpen, setIsCoverOpen] = useState(false);
   const hasCoverImage = Boolean(book?.coverImageUrl);
@@ -18,7 +27,25 @@ function BookDetail({
   const isLoggedIn = Boolean(currentUser);
   const isOwner =
     isLoggedIn && String(book?.author?.userId) === String(currentUser.userId);
- 
+  const [newComment, setNewComment] = useState("");
+
+  useEffect(() => {
+    if (book?.id) {
+      onCommentFetch(book.id, sortBy);
+    }
+  }, [book?.id, sortBy, onCommentFetch]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    const isSuccess = await onCommentSubmit(book.id, newComment);
+
+    if (isSuccess) {
+      setNewComment("");
+    }
+  };
+
   if (!book) {
     return (
       <>
@@ -28,7 +55,7 @@ function BookDetail({
       </>
     );
   }
- 
+
   return (
     <>
       <main className="detail-page">
@@ -50,7 +77,7 @@ function BookDetail({
                 <path d="m12 19-7-7 7-7" />
               </svg>
             </button>
- 
+
             <button
               type="button"
               className="list-return-button"
@@ -70,7 +97,7 @@ function BookDetail({
               <span>목록으로</span>
             </button>
           </div>
- 
+
           <div
             className={`detail-cover ${hasCoverImage ? "has-image" : ""}`}
             onClick={() => {
@@ -102,7 +129,7 @@ function BookDetail({
               </>
             )}
           </div>
- 
+
           <div className="detail-info">
             <span className="tag">상세 조회</span>
             <h2>{book.title}</h2>
@@ -129,12 +156,12 @@ function BookDetail({
             )}
             <p>저자: {book.author.nickname}</p>
             {book.publisher && <p>출판사: {book.publisher}</p>}
- 
+
             <div className="content-box">
               <strong>도서 소개</strong>
               <p>{book.content}</p>
             </div>
- 
+
             <p className="date-text">
               등록일: {book.createdAt.slice(0, 10)} / 수정일:{" "}
               {book.updatedAt.slice(0, 10)}
@@ -164,7 +191,7 @@ function BookDetail({
                 </button>
               )}
             </div>
- 
+
             {isOwner && <div className="detail-buttons">
               <button type="button" onClick={() => onMoveToCoverUpdate(book)}>
                 <svg
@@ -191,7 +218,65 @@ function BookDetail({
             </div>}
           </div>
         </section>
- 
+
+        <section className="comment-section" style={{ marginTop: "40px", padding: "20px", background: "#f9f9f9", borderRadius: "12px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+            <h3 style={{ margin: 0 }}>💬 한 줄 감상평 ({comments.length})</h3>
+
+            {/* 정렬 탭 버튼 클릭 시 부모의 정렬 기준을 바꿈 */}
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button type="button" onClick={() => onSortChange("latest")} style={{ background: "none", border: "none", color: sortBy === "latest" ? "#4A90E2" : "#888", fontWeight: sortBy === "latest" ? "bold" : "normal", cursor: "pointer", fontSize: "14px" }}>최신순</button>
+              <span style={{ color: "#ccc", fontSize: "14px" }}>|</span>
+              <button type="button" onClick={() => onSortChange("likes")} style={{ background: "none", border: "none", color: sortBy === "likes" ? "#4A90E2" : "#888", fontWeight: sortBy === "likes" ? "bold" : "normal", cursor: "pointer", fontSize: "14px" }}>좋아요순</button>
+            </div>
+          </div>
+
+          {isLoggedIn ? (
+            <form onSubmit={handleSubmit} style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+              <input type="text" placeholder="따뜻한 감상평을 한 줄 남겨주세요." value={newComment} onChange={(e) => setNewComment(e.target.value)} style={{ flex: 1, padding: "12px", borderRadius: "6px", border: "1px solid #ddd" }} />
+              <button type="submit" style={{ padding: "12px 24px", background: "#4A90E2", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}>등록</button>
+            </form>
+          ) : (
+            <p style={{ color: "#888", fontStyle: "italic", marginBottom: "20px" }}>🔒 댓글을 작성하려면 로그인이 필요합니다.</p>
+          )}
+
+          <div className="comment-list" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {comments.length > 0 ? (
+              comments.map((comment) => {
+                const isCommentOwner = isLoggedIn && comment.nickname === currentUser?.nickname;
+
+                return (
+                  <div key={comment.id} style={{ padding: "14px", background: "#fff", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <strong style={{ color: "#333" }}>{comment.nickname}</strong>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ fontSize: "12px", color: "#999" }}>{comment.createdAt}</span>
+
+                        {/* 부모가 넘겨준 함수로 딸깍 위임 */}
+                        <button type="button" onClick={() => onCommentLike(book.id, comment.id)} style={{ background: "none", border: "none", color: "#666", fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "3px", padding: "0 4px" }}>
+                          ❤️ <span style={{ fontWeight: "bold" }}>{comment.likeCount || 0}</span>
+                        </button>
+
+                        {isCommentOwner && (
+                          <button type="button" onClick={() => onCommentDelete(book.id, comment.id)} style={{ background: "none", border: "none", color: "#FF5A5A", fontSize: "12px", cursor: "pointer", fontWeight: "bold", padding: 0 }}>
+                            삭제
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <p style={{ margin: 0, color: "#555" }}>{comment.content}</p>
+                  </div>
+                );
+              })
+            ) : (
+              <p style={{ color: "#aaa", textAlign: "center", padding: "20px 0" }}>첫 번째 감상평을 남겨보세요! ✍️</p>
+            )}
+          </div>
+        </section>
+
+
+
         {isCoverOpen && book.coverImageUrl && (
           <CoverImageModal
             imageUrl={book.coverImageUrl}
@@ -203,5 +288,5 @@ function BookDetail({
     </>
   );
 }
- 
+
 export default BookDetail;
