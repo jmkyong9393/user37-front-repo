@@ -22,13 +22,13 @@ function Header({
       label: "AivleBooks 소개",
     };
 
-    const recommendationBanners = [0, 1].map((index) => ({
+    const recommendationBanner = {
       type: "recommendation",
-      label: `${currentMonth}월의 AI 추천 도서 ${index + 1}`,
-      book: aiRecommendations[index] || null,
-    }));
+      label: `${currentMonth}월의 AI 추천 도서`,
+      book: aiRecommendations[0] || null,
+    };
 
-    return [introBanner, ...recommendationBanners];
+    return [introBanner, recommendationBanner];
   }, [aiRecommendations, currentMonth]);
 
   useEffect(() => {

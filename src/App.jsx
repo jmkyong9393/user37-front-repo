@@ -208,53 +208,21 @@ function App() {
     }
   };
 
-  const fetchAIRecommendations = async (books) => {
-    if (books.length === 0) return [];
-
-    const simplifiedBooks = books.map((book) => ({
-      id: book.id,
-      title: book.title,
-      author: book.author.nickname,
-      content: book.content,
-      tags: book.tags,
-    }));
-    const currentMonth = new Date().getMonth() + 1;
-
-    const prompt = `
-    지금은 ${currentMonth}월입니다.
-    아래는 우리 도서관에 등록된 책 목록입니다:
-    ${JSON.stringify(simplifiedBooks)}
-
-    이번 달 분위기, 계절감, 책의 제목과 소개를 함께 고려해서 서로 다른 추천 도서 2권을 골라주세요.
-    reason은 홈 배너에 바로 노출되는 짧은 카피입니다. 35~55자 정도의 자연스러운 한 문장으로 작성하고,
-    따옴표, 이모지, 마크다운, 책 제목 반복 없이 책의 매력을 부드럽게 설명해주세요.
-    응답은 반드시 아래와 같은 순수 JSON 배열만 반환해주세요.
-    [
-      {"recommendedId": 숫자, "reason": "배너용 추천 문구"},
-      {"recommendedId": 숫자, "reason": "배너용 추천 문구"}
-    ]
-    `;
-
+  const fetchAIRecommendations = async () => {
     try {
-      const response = await fetch(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [{ role: "user", content: prompt }],
-            response_format: { type: "json_object" }
-          }),
-        },
-      );
-      const result = await response.json();
-      const content = result.choices[0].message.content.trim();
-      const aiData = JSON.parse(content);
-      return Array.isArray(aiData) ? aiData : [aiData];
+      const response = await fetch(`${API_URL}/ai-recommendation`);
+
+      if (!response.ok) {
+        throw new Error("AI 추천 도서를 불러오지 못했습니다.");
+      }
+
+      const data = await response.json();
+
+      if (!data || !data.id) {
+        return [];
+      }
+
+      return [normalizeBook(data)];
     } catch (error) {
       console.error("AI 추천 실패:", error);
       return [];
@@ -262,24 +230,8 @@ function App() {
   };
   useEffect(() => {
     if (books.length > 0) {
-      fetchAIRecommendations(books).then((results) => {
-        const nextRecommendations = results
-          .map((result) => {
-            const recommendedBook = books.find(
-              (book) => book.id === result.recommendedId,
-            );
-
-            if (!recommendedBook) return null;
-
-            return {
-              ...recommendedBook,
-              reason: result.reason,
-            };
-          })
-          .filter(Boolean)
-          .slice(0, 2);
-
-        setAiRecommendations(nextRecommendations);
+      fetchAIRecommendations().then((results) => {
+        setAiRecommendations(results.slice(0, 2));
       });
     }
   }, [books]);
