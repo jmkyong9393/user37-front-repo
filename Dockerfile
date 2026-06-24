@@ -1,4 +1,4 @@
-FROM node:18 AS build
+FROM public.ecr.aws/docker/library/node:18 AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
