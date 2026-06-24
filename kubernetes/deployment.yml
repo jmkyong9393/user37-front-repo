@@ -15,7 +15,7 @@ spec:
       containers:
         - name: front-container
           # 여기의 12자리 숫자를 본인의 AWS Account ID로 수정하세요!
-          image: 416225317325.dkr.ecr.ap-northeast-2.amazonaws.com/user37-front-ecr:latest
+          image: 416225317325.dkr.ecr.us-east-1.amazonaws.com/user37-front-ecr:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
