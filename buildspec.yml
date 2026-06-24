@@ -30,7 +30,7 @@ phases:
       - echo "=> EKS 클러스터 인증 정보를 업데이트합니다..."
       - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $EKS_CLUSTER_NAME
       - echo "=> EKS에 프론트엔드 리소스를 배포합니다..."
-      - kubectl apply -f kubernetes/deployment.yaml
-      - kubectl apply -f kubernetes/service.yaml
+      - kubectl apply -f kubernetes/deployment.yml
+      - kubectl apply -f kubernetes/service.yml
       - kubectl rollout restart deployment/front-deployment
       - echo "=> EKS 프론트엔드 배포 완료!"
