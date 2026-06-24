@@ -2,28 +2,35 @@ version: 0.2
 
 env:
   variables:
-    # 아래 변수값을 실제 본인의 환경에 맞게 수정하세요.
-    S3_BUCKET: "user37-front-bucket"
-    CLOUDFRONT_ID: "EKFC2QJPXXA5D"
+    AWS_DEFAULT_REGION: "ap-northeast-2"
+    ECR_REPO_NAME: "user37-front-ecr"
+    # 본인의 실제 EKS 클러스터 이름으로 반드시 변경하세요!
+    EKS_CLUSTER_NAME: "user37-eks-cluster"
 
 phases:
   install:
-    runtime-versions:
-      nodejs: 18
     commands:
-      - echo "=> 패키지 매니저 버전 확인"
-      - npm -v
-      - echo "=> 의존성 패키지를 설치합니다..."
-      - npm install
+      - echo "=> kubectl 설치 중..."
+      - curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.29.0/2024-01-04/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl
+      - mv ./kubectl /usr/local/bin/kubectl
+  pre_build:
+    commands:
+      - echo "=> Amazon ECR에 로그인합니다..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
   build:
     commands:
-      - echo "=> React/Vite 애플리케이션을 빌드합니다..."
-      - npm run build
+      - echo "=> Nginx 기반 프론트엔드 Docker 이미지를 빌드합니다..."
+      - docker build -t $ECR_REPO_NAME:latest .
+      - docker tag $ECR_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO_NAME:latest
   post_build:
     commands:
-      - echo "=> 빌드 결과물을 S3 버킷으로 동기화(업로드) 합니다..."
-      # --delete 옵션은 S3 버킷에는 있지만 빌드 결과물에는 없는 파일을 삭제하여 깔끔하게 유지합니다.
-      - aws s3 sync dist/ s3://$S3_BUCKET --delete
-      - echo "=> CloudFront 캐시를 무효화하여 최신 버전을 즉시 반영합니다..."
-      - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths "/*"
-      - echo "=> 프론트엔드 배포가 성공적으로 완료되었습니다!"
+      - echo "=> 빌드된 이미지를 ECR로 푸시합니다..."
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO_NAME:latest
+      - echo "=> EKS 클러스터 인증 정보를 업데이트합니다..."
+      - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $EKS_CLUSTER_NAME
+      - echo "=> EKS에 프론트엔드 리소스를 배포합니다..."
+      - kubectl apply -f kubernetes/deployment.yaml
+      - kubectl apply -f kubernetes/service.yaml
+      - kubectl rollout restart deployment/front-deployment
+      - echo "=> EKS 프론트엔드 배포 완료!"

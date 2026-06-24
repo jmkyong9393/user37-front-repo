@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: front-app
+  template:
+    metadata:
+      labels:
+        app: front-app
+    spec:
+      containers:
+        - name: front-container
+          # 여기의 12자리 숫자를 본인의 AWS Account ID로 수정하세요!
+          image: 416225317325.dkr.ecr.ap-northeast-2.amazonaws.com/user37-front-ecr:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
