@@ -1,5 +1,4 @@
-const AUTH_API_URL =
-  import.meta.env.VITE_AUTH_API_URL || "http://localhost:8080/users";
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || "/api/users";
  
 const AUTH_STORAGE_KEY = "aivlebooks_auth";
 const USE_MOCK_AUTH = import.meta.env.VITE_USE_MOCK_AUTH === "true";
