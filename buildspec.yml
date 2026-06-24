@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    AWS_DEFAULT_REGION: "ap-northeast-2"
+    AWS_DEFAULT_REGION: "us-east-1"
     ECR_REPO_NAME: "user37-front-ecr"
     # 본인의 실제 EKS 클러스터 이름으로 반드시 변경하세요!
     EKS_CLUSTER_NAME: "user37-eks-cluster"
@@ -11,7 +11,7 @@ phases:
   install:
     commands:
       - echo "=> kubectl 설치 중..."
-      - curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.29.0/2024-01-04/bin/linux/amd64/kubectl
+      - curl -O https://s3.us-east-1.amazonaws.com/amazon-eks/1.29.0/2024-01-04/bin/linux/amd64/kubectl
       - chmod +x ./kubectl
       - mv ./kubectl /usr/local/bin/kubectl
   pre_build:

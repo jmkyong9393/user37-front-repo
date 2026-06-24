@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user37-front-deployment
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: user37-frontend
+  template:
+    metadata:
+      labels:
+        app: user37-frontend
+    spec:
+      containers:
+        - name: user37-frontend
+          image: <IMAGE_URI> # CodeBuild에서 자동 치환됨
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user37-front-service
+  annotations:
+    # ⚠️ ACM 인증서 발급 후 아래 본인의 인증서 ARN으로 반드시 변경하세요!
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:us-east-1:416225317325:certificate/1b76a3a6-bf3f-40f4-b76e-f91f6bc11dc8"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+spec:
+  type: LoadBalancer # 외부 접속용 로드밸런서
+  selector:
+    app: user37-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+    - name: https
+      port: 443
+      targetPort: 80
