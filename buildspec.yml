@@ -1,0 +1,29 @@
+version: 0.2
+
+env:
+  variables:
+    # 아래 변수값을 실제 본인의 환경에 맞게 수정하세요.
+    S3_BUCKET: "user37-front-bucket"
+    CLOUDFRONT_ID: "EKFC2QJPXXA5D"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo "=> 패키지 매니저 버전 확인"
+      - npm -v
+      - echo "=> 의존성 패키지를 설치합니다..."
+      - npm install
+  build:
+    commands:
+      - echo "=> React/Vite 애플리케이션을 빌드합니다..."
+      - npm run build
+  post_build:
+    commands:
+      - echo "=> 빌드 결과물을 S3 버킷으로 동기화(업로드) 합니다..."
+      # --delete 옵션은 S3 버킷에는 있지만 빌드 결과물에는 없는 파일을 삭제하여 깔끔하게 유지합니다.
+      - aws s3 sync dist/ s3://$S3_BUCKET --delete
+      - echo "=> CloudFront 캐시를 무효화하여 최신 버전을 즉시 반영합니다..."
+      - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths "/*"
+      - echo "=> 프론트엔드 배포가 성공적으로 완료되었습니다!"
