@@ -17,7 +17,7 @@ export default defineConfig({
         // 4. [매우 중요!] 경로 재작성 규칙
         // 만약 스프링 부트 컨트롤러가 @RequestMapping("/api/users") 처럼 '/api'를 포함하고 있다면 아래 줄은 주석 처리하세요.
         // 만약 스프링 부트 컨트롤러가 @RequestMapping("/users") 처럼 '/api'가 없다면 주석을 해제하여 '/api'라는 글자를 지우고 보내야 합니다.
-        rewrite: (path) => path.replace(/^\/, '')
+        rewrite: (path) => path.replace(/^\/api/, '')
       }
     }
   }
