@@ -18,6 +18,22 @@ phases:
     commands:
       - echo "=> Amazon ECR에 로그인합니다..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+
+      - echo "=> 빌드 환경을 준비합니다..."
+      # (🚨주의: 아래 명령어의 꺾쇠(>, >>) 개수를 꼭 똑같이 적어주세요!)
+
+      # 1. 기존 .env를 덮어쓰고 AI 키를 넣습니다.
+      - echo "VITE_AI_API_KEY=$AI_SECRET_KEY" > .env
+
+      # 2. 로그인 및 회원가입 API 주소를 Nginx 프록시(/api)로 향하게 합니다.
+      - echo "VITE_AUTH_API_URL=/api/users" >> .env
+
+      # 3. 책 목록 등 나머지 모든 API 주소를 Nginx 프록시(/api)로 향하게 합니다.
+      - echo "VITE_API_URL=/api" >> .env
+
+      # 4. 강제로 목업(가짜) 데이터를 쓰지 않도록 못을 박습니다.
+      - echo "VITE_USE_MOCK_AUTH=false" >> .env
+
   build:
     commands:
       - echo "=> Nginx 기반 프론트엔드 Docker 이미지를 빌드합니다..."
