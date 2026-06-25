@@ -36,9 +36,7 @@ function BookCreate({ onMoveToList, onCreate, onExtractTags, currentUser }) {
 
     const submitData = {
       ...formData,
-      author: {
-        userId: currentUser?.userId,
-      },
+      author: currentUser,
     };
 
     onCreate(submitData);
